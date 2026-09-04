@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>精密機械線性編碼器互動教學實驗室 | Linear Encoders Interactive Lab</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- KaTeX for formula rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo-group">
+        <div class="logo-icon">📏</div>
+        <div>
+          <h1>線性編碼器互動教學實驗室</h1>
+          <p class="subtitle">精密機械之組成及誤差成因（Chap 2, pp. 19-33）</p>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a href="#section-overview" class="nav-item active">感測器總覽</a>
+        <a href="#section-inductive" class="nav-item">電感尺</a>
+        <a href="#section-magnetic" class="nav-item">磁性尺</a>
+        <a href="#section-optical-diff" class="nav-item">差動抗飄移</a>
+        <a href="#section-moire" class="nav-item">莫爾條紋</a>
+        <a href="#section-quadrature" class="nav-item">4倍頻與方向</a>
+        <a href="#section-lissajous" class="nav-item">利薩爾圓調校</a>
+        <a href="#section-quiz" class="nav-item badge-quiz">隨堂測驗</a>
+      </nav>
+      <div class="header-actions">
+        <button id="theme-toggle" class="btn-icon" title="切換深淺模式">🌓</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Banner -->
+  <section class="hero-banner">
+    <div class="hero-content">
+      <span class="badge">精密機電量測原理</span>
+      <h2>探索奈米與微米級定位的靈魂：線性編碼器</h2>
+      <p>
+        在精密機械與半導體設備中，機台是如何精確得知移動台的微米級位置？
+        本網頁將教材（第 19 ~ 33 頁）中抽象的電磁耦合、差動消除直流飄移、莫爾條紋光學放大及 4 倍頻正交解碼轉化為可動手調節的動態模擬實驗。
+      </p>
+      <div class="hero-tags">
+        <span>⚡ 電感式感應尺</span>
+        <span>🧲 磁性尺 2倍頻</span>
+        <span>💡 四組感測器差動抗飄移</span>
+        <span>🔬 莫爾條紋57倍光學放大</span>
+        <span>🔄 4倍頻方向狀態機</span>
+        <span>🎯 利薩爾圓示波器調校</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Container -->
+  <main class="main-container">
+
+    <!-- SECTION 1: OVERVIEW & COMPARISON -->
+    <section id="section-overview" class="lab-card">
+      <div class="card-header">
+        <span class="section-num">Page 19 & 24</span>
+        <h2>1. 位移感測器總覽：直接量測 vs 間接量測與三大編碼器對照</h2>
+      </div>
+      
+      <!-- Direct vs Indirect Interactive Demo -->
+      <div class="sub-block">
+        <div class="block-title">
+          <h3>🎯 核心觀念一：直接量測 (Direct) vs 間接量測 (Indirect) 與背隙誤差 (Backlash)</h3>
+        </div>
+        <p class="desc-text">
+          <strong>間接量測</strong>：量測伺服馬達之旋轉編碼器角度，再經由滾珠導螺桿螺距換算成線性位移。缺點是在反向運動時，螺桿與螺帽的微小間隙會產生<strong>背隙誤差 (Backlash error)</strong>，導致工作台滯後。<br>
+          <strong>直接量測</strong>：將尺規（如光學尺）直接固定於移動軸工作台上，直接讀取實際位移，<strong>完全沒有背隙問題</strong>，精度最高！
+        </p>
+
+        <div class="interactive-panel">
+          <div class="controls-row">
+            <button id="btn-move-left" class="btn btn-primary">⬅️ 向左驅動馬達</button>
+            <button id="btn-move-right" class="btn btn-primary">➡️ 向右驅動馬達</button>
+            <button id="btn-reverse-dir" class="btn btn-warning">🔁 瞬間反向運動（觀察背隙）</button>
+            <button id="btn-reset-motion" class="btn btn-secondary">重設位置</button>
+          </div>
+
+          <div class="canvas-wrapper">
+            <canvas id="canvas-backlash" width="850" height="220"></canvas>
+          </div>
+
+          <div class="status-dashboard">
+            <div class="status-item">
+              <span class="status-label">馬達旋轉換算位移（間接量測）</span>
+              <span class="status-val text-cyan" id="disp-indirect-pos">0.000 mm</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">工作台實際位移（光學尺直接量測）</span>
+              <span class="status-val text-green" id="disp-direct-pos">0.000 mm</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">當前累積背隙誤差 (Backlash Error)</span>
+              <span class="status-val text-red" id="disp-backlash-err">0.000 mm</span>
+            </div>
+          </div>
+          <div class="tip-box">
+            💡 <strong>教學觀察點：</strong>當馬達改變旋轉方向瞬間，旋轉編碼器已開始計數，但導螺桿因內部餘隙尚未推動螺帽，工作台處於靜止空轉狀態；光學尺則如實反映「工作台未動」，這就是直接量測消除背隙的本質優勢！
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 Encoders Comparison Matrix -->
+      <div class="sub-block">
+        <div class="block-title">
+          <h3>📊 核心觀念二：三大線性編碼器特性全方位對比矩陣</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>編碼器類型</th>
+                <th>工作原理</th>
+                <th>優點與強項</th>
+                <th>缺點與限制</th>
+                <th>抗油污粉塵能力</th>
+                <th>節距 (Pitch) 與解析度</th>
+                <th>典型工業應用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="highlight-row">
+                <td><strong class="text-blue">光學尺 (Optical Scale)</strong></td>
+                <td>LED 平行光通過穿透/反射光柵，光電二極體接收明暗週期訊號</td>
+                <td>精度極高（可達次微米甚至奈米級）、響應速度快</td>
+                <td>光學鏡面易受油污、水氣、粉塵遮蔽污染</td>
+                <td><span class="rating-badge rating-low">較弱（需密閉封條或正壓吹氣）</span></td>
+                <td>節距小（如 4~20 μm），經細分割後解析度可達數 nm</td>
+                <td>半導體製程、CNC 高階工具機、三次元座標量測儀 (CMM)</td>
+              </tr>
+              <tr>
+                <td><strong class="text-green">電感式感應尺 (Inductive Scale)</strong></td>
+                <td>主尺與副尺蜿蜒傳導線圈之高頻交流電磁感應耦合</td>
+                <td>結構堅固耐用、不受油污灰塵金屬屑影響、間隙容忍度大</td>
+                <td>線圈繞組幾何尺寸限制，節距通常較大，高頻電磁屏蔽要求高</td>
+                <td><span class="rating-badge rating-high">極佳（耐惡劣環境）</span></td>
+                <td>節距較大（通常 1~2 mm），需配合電子插補以提升解析度</td>
+                <td>重型加工機、自動化產線、油污嚴重的重工業衝壓與鍛造機</td>
+              </tr>
+              <tr>
+                <td><strong class="text-orange">磁性尺 (Magnetic Scale)</strong></td>
+                <td>永久交錯 N-S 磁極主尺與 U 型磁軛讀取頭磁通調制</td>
+                <td>不怕油水冷卻液、長行程安裝容易（可軟磁帶黏貼）、耐衝擊震動</td>
+                <td>解析度較光學尺低、強外部磁場環境下恐受干擾消磁</td>
+                <td><span class="rating-badge rating-high">極佳（防水防油防塵）</span></td>
+                <td>節距中等（如 0.5~5 mm），解析度通常在 1~5 μm</td>
+                <td>木工機、石材切割機、傳統大型龍門銑床、沖床行程監控</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Transmission Glass vs Reflective Steel -->
+      <div class="sub-block">
+        <div class="block-title">
+          <h3>🔬 光學尺構造分類：穿透式玻璃尺 vs 反射式鋼尺 (教材 Page 24)</h3>
+        </div>
+        <div class="two-column-card">
+          <div class="card-item">
+            <h4>穿透式玻璃光學尺 (Transmission Glass Scale)</h4>
+            <div class="scale-img-box">
+              <img src="assets/page_24_img_3.jpeg" alt="穿透式光學尺結構" class="doc-img">
+            </div>
+            <ul>
+              <li><strong>光學路徑：</strong>光源 (LED) → 聚光鏡 → 玻璃主尺 → 副尺光柵 → 受光元件。光線<strong>穿透</strong>玻璃主尺。</li>
+              <li><strong>基材材質：</strong>低熱膨脹光學玻璃，刻劃精度極高、穩定度極佳。</li>
+              <li><strong>行程限制：</strong>玻璃長度受限，通常適用於 1~3 米以內之高精度量測。</li>
+            </ul>
+          </div>
+          <div class="card-item">
+            <h4>反射式鋼帶光學尺 (Reflective Steel Scale)</h4>
+            <div class="scale-img-box">
+              <img src="assets/page_24_img_4.jpeg" alt="反射式光學尺結構" class="doc-img">
+            </div>
+            <ul>
+              <li><strong>光學路徑：</strong>光源與感測器設於同側，光線射向具有高反射率的金屬鋼帶刻線並<strong>反射</strong>回讀取頭。</li>
+              <li><strong>基材材質：</strong>彈性不銹鋼帶，可整捲收納、安裝具備張力拉伸調節機構。</li>
+              <li><strong>行程特點：</strong>可拼接至數十米甚至百米以上，非常適合大型龍門機台與長行程自動化滑軌。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- SECTION 2: INDUCTIVE SCALE -->
+    <section id="section-inductive" class="lab-card">
+      <div class="card-header">
+        <span class="section-num">Page 20 ~ 22</span>
+        <h2>2. 電感式感應尺 (Inductive Scale) 工作原理與雙迴路</h2>
+      </div>
+
+      <div class="sub-block">
+        <p class="desc-text">
+          電感尺的主尺與副尺（讀取頭）均佈有<strong>線性蜿蜒伸展 (Serpentine pattern)</strong> 的傳導線圈。
+          當讀取頭通入高頻激磁電流時，兩者之間的<strong>電磁感應耦合 (Electromagnetic Coupling)</strong> 強弱會隨著相對位移呈現週期性變化。
+        </p>
+
+        <!-- Interactive Simulator -->
+        <div class="interactive-panel">
+          <div class="panel-top-controls">
+            <div class="control-group">
+              <label for="slider-inductive-pos">拖曳移動讀取頭位置：<span id="label-inductive-pos">0.00 Pitch</span></label>
+              <input type="range" id="slider-inductive-pos" min="0" max="2.0" step="0.01" value="0">
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-outline" data-pos="0">位置 A (0.00)</button>
+              <button class="btn btn-sm btn-outline" data-pos="0.25">位置 B (0.25)</button>
+              <button class="btn btn-sm btn-outline" data-pos="0.5">位置 C (0.50)</button>
+              <button class="btn btn-sm btn-outline" data-pos="0.75">位置 D (0.75)</button>
+              <button class="btn btn-sm btn-outline" data-pos="1.0">位置 E (1.00)</button>
+            </div>
+          </div>
+
+          <!-- Canvases -->
+          <div class="grid-2-canvas">
+            <div class="canvas-box">
+              <h4>蜿蜒線圈幾何重疊視覺化 (直尺與讀取頭)</h4>
+              <canvas id="canvas-inductive-coils" width="480" height="230"></canvas>
+            </div>
+            <div class="canvas-box">
+              <h4>電磁結合度與正餘弦感應訊號 (SIN / COS)</h4>
+              <canvas id="canvas-inductive-wave" width="480" height="230"></canvas>
+            </div>
+          </div>
+
+          <!-- Analysis of Positions A to E -->
+          <div class="pos-explanation-card" id="inductive-explanation">
+            <div class="pos-badge" id="inductive-badge">當前狀態：位置 A</div>
+            <p id="inductive-detail-text">
+              <strong>位置 A (0 間距)：</strong>尺的迴路與讀取頭迴路完全重合一致，磁通耦合最大，電磁結合度在正方向達到最大值 (+1.0)。
+            </p>
+          </div>
+
+          <div class="info-card-blue">
+            <h4>💡 教材重點解析 (Page 22)：為何讀取頭需要兩組偏離 1/4 間距的迴路？</h4>
+            <p>
+              在讀取頭上設計兩組偏離 1/4 間距 (90° 相位差) 的獨立迴路，分別感應出正弦（SIN）與餘弦（COS）的電磁結合訊號。
+              藉由這兩組正交訊號，系統可以利用正切運算求解精確相位，<strong>完全消除因尺面與讀取頭上下間隙 (Air Gap) 波動對信號振幅產生的干擾</strong>，大幅提升工業惡劣環境下的檢測穩定度！
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- SECTION 3: MAGNETIC SCALE -->
+    <section id="section-magnetic" class="lab-card">
+      <div class="card-header">
+        <span class="section-num">Page 23</span>
+        <h2>3. 磁性尺 (Magnetic Scale) 預磁化與 2 倍頻感應原理</h2>
+      </div>
+
+      <div class="sub-block">
+        <p class="desc-text">
+          磁性尺包含兩大部件：
+          <strong>主尺 (M)</strong> 為預先充磁、具有等間距 N-S 極交錯的永久磁性尺；
+          <strong>讀取頭 (F)</strong> 為 U 型軟磁鐵心磁軛，上方繞有兩組通入交流電的<strong>激勵線圈 (Is)</strong> 與一組<strong>接收感應線圈 (S1, S2)</strong>。
+        </p>
+
+        <div class="interactive-panel">
+          <div class="panel-top-controls">
+            <div class="control-group">
+              <label for="slider-mag-pos">移動 U 型讀取頭位置：<span id="label-mag-pos">正對磁極 (最大磁通)</span></label>
+              <input type="range" id="slider-mag-pos" min="0" max="2.0" step="0.01" value="0.5">
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-outline" id="btn-mag-aligned">正對 N-S 兩極 (磁通最大)</button>
+              <button class="btn btn-sm btn-outline" id="btn-mag-symm">處於對稱點 (磁通為零)</button>
+            </div>
+          </div>
+
+          <div class="grid-2-canvas">
+            <div class="canvas-box">
+              <h4>U 型磁軛與 N-S 磁極主尺相對幾何</h4>
+              <canvas id="canvas-mag-structure" width="480" height="240"></canvas>
+            </div>
+            <div class="canvas-box">
+              <h4>激勵電流 (f) vs 接收線圈感應訊號 (2f)</h4>
+              <canvas id="canvas-mag-wave" width="480" height="240"></canvas>
+            </div>
+          </div>
+
+          <div class="status-dashboard">
+            <div class="status-item">
+              <span class="status-label">U 型軛預磁化磁通量 Φ</span>
+              <span class="status-val text-cyan" id="disp-mag-flux">1.00 Max</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">激勵交流電流頻率 f</span>
+              <span class="status-val" id="disp-mag-f">10 kHz (基準)</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">感應訊號頻率與振幅</span>
+              <span class="status-val text-green" id="disp-mag-out">20 kHz (2倍頻, Max)</span>
+            </div>
+          </div>
+
+          <div class="tip-box">
+            📌 <strong>教材原理提煉 (Page 23)：</strong><br>
+            1. <strong>正對極性：</strong>當 U 型軛兩臂正對 N、S 兩極時，主尺磁通深度預磁化鐵心，接收線圈感應出的訊號頻率會是<strong>激勵電流的兩倍 (2倍頻, 2f)</strong>，振幅最大。<br>
+            2. <strong>對稱中心：</strong>當 U 型軛處於 N、S 磁極的幾何對稱點時，兩臂磁通等量相抵，淨磁通為零，接收線圈沒有輸出訊號。<br>
+            3. 分析感應電壓的包絡變化，即可解算出讀取頭相對於磁尺的精密位移。
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- SECTION 4: OPTICAL SCALE DIFFERENTIAL SIGNALS -->
+    <section id="section-optical-diff" class="lab-card">
+      <div class="card-header">
+        <span class="section-num">Page 25 ~ 27</span>
+        <h2>4. 光學尺量測原理：四組感測器與差動消除直流飄移 (DC Drift)</h2>
+      </div>
+
+      <div class="sub-block">
+        <p class="desc-text">
+          在穿透式光學尺中，LED 光線穿透主光柵與移動副光柵，在光電感測器上產生明暗週期變化。
+          理想情況下使用兩組感測器輸出 sinθ 與 cosθ。但<strong>為何工業光學尺均採用四組光感測器？</strong>
+        </p>
+
+        <div class="formula-card">
+          <h4>數學模型推導 (教材式 2.1 ~ 2.6)</h4>
+          <p>
+            四組光感測器物理上依序平移 1/4 間距（相位各差 90°）。當光源因發熱或老化產生不穩定<strong>直流飄移 V'</strong> 時：
+          </p>
+          <div class="math-grid">
+            <div class="math-item">V₁ = V' + sinθ （式 2.1）</div>
+            <div class="math-item">V₂ = V' + sin(θ+90°) = V' + cosθ （式 2.2）</div>
+            <div class="math-item">V₃ = V' + sin(θ+180°) = V' - sinθ （式 2.3）</div>
+            <div class="math-item">V₄ = V' + sin(θ+270°) = V' - cosθ （式 2.4）</div>
+          </div>
+          <p>進行差動電路處理（減法運算）：</p>
+          <div class="math-diff-result">
+            <div class="math-item-diff">Va = V₁ - V₃ = (V' + sinθ) - (V' - sinθ) = <strong>2sinθ</strong> （式 2.5）</div>
+            <div class="math-item-diff">Vb = V₂ - V₄ = (V' + cosθ) - (V' - cosθ) = <strong>2cosθ</strong> （式 2.6）</div>
+          </div>
+          <p class="highlight-p">
+            🎉 <strong>雙重優點：</strong>1. 直流飄移 V' 被數學完全對消！ 2. 輸出信號振幅放大一倍 (2×)，大幅提升訊噪比 (SNR) 與靈敏度！
+          </p>
+        </div>
+
+        <!-- Differential Simulator -->
+        <div class="interactive-panel">
+          <div class="controls-row-sliders">
+            <div class="control-group">
+              <label for="slider-dc-drift">
+                <strong>光源不穩定 / 直流飄移量 (V')：</strong>
+                <span id="label-dc-drift" class="text-red">+0.60 V</span>
+              </label>
+              <input type="range" id="slider-dc-drift" min="-1.5" max="1.5" step="0.05" value="0.6">
+            </div>
+            <div class="control-group">
+              <label for="slider-opt-pos">
+                <strong>副光柵位移相位 (θ)：</strong>
+                <span id="label-opt-pos" class="text-cyan">0°</span>
+              </label>
+              <input type="range" id="slider-opt-pos" min="0" max="720" step="5" value="0">
+            </div>
+            <button id="btn-auto-run-opt" class="btn btn-primary">▶️ 自動連續移動副尺</button>
+          </div>
+
+          <div class="grid-2-canvas">
+            <div class="canvas-box">
+              <h4>未經差動之 4 組原始感測電壓 (V₁, V₂, V₃, V₄)</h4>
+              <canvas id="canvas-raw-signals" width="480" height="230"></canvas>
+              <div class="legend-row">
+                <span class="leg-item leg-v1">V1 (sin)</span>
+                <span class="leg-item leg-v2">V2 (cos)</span>
+                <span class="leg-item leg-v3">V3 (-sin)</span>
+                <span class="leg-item leg-v4">V4 (-cos)</span>
+                <span class="leg-item leg-ref">0V 基準</span>
+              </div>
+            </div>
+
+            <div class="canvas-box">
+              <h4>經差動電路處理後之正交訊號 (Va = 2sinθ, Vb = 2cosθ)</h4>
+              <canvas id="canvas-diff-signals" width="480" height="230"></canvas>
+              <div class="legend-row">
+                <span class="leg-item leg-va">Va = V1 - V3 (2sinθ)</span>
+                <span class="leg-item leg-vb">Vb = V2 - V4 (2cosθ)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tip-box">
+            👉 <strong>動手試試看：</strong>拖曳上方的「光源不穩定 / 直流飄移量 (V')」滑桿！你會發現左邊的 4 組原始訊號隨之中線上下偏移（這會讓後級過零比較器判定失真）；但在右邊的差動波形中，中心線永遠精準鎖定在 0V，且振幅維持完整的 2 倍放大！
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- SECTION 5: MOIRE EFFECT -->
+    <section id="section-moire" class="lab-card">
+      <div class="card-header">
+        <span class="section-num">Page 30 ~ 31</span>
+        <h2>5. 莫爾條紋 (Moiré Effect) 幾何光學放大與安裝容差</h2>
+      </div>
+
+      <div class="sub-block">
+        <div class="problem-solution-box">
+          <div class="prob-card">
+            <h4>❌ 為什麼不能平行安裝？（感測器安裝誤差的致命影響）</h4>
+            <p>
+              若主光柵與副光柵<strong>完全平行安裝</strong>，假設光柵柵距 w = 20 μm：<br>
+              若光電感測器的定位精度僅有 ±1 μm，則副尺每移動一個柵距，感測位移就會產生 ±5% 的嚴重誤差！<br>
+              當平台累計移動 20 mm 時，<strong>累積誤差會暴增至 ±1 mm</strong>，系統根本無法使用！
+            </p>
+          </div>
+          <div class="sol-card">
+            <h4>✅ 巧妙解決方案：莫爾條紋 (Moiré Effect) 斜交安裝</h4>
+            <p>
+              將主尺與副尺以<strong>微小夾角 θ 斜交安裝</strong>！此時光柵交疊會產生週期遠大於柵距的宏觀莫爾條紋。<br>
+              條紋週期公式：l = w / [2·sin(θ/2)] ≈ w / θ<br>
+              當 w = 20 μm、θ = 1° 時，條紋寬度放大為 l = 1.146 mm（<strong>放大達 57.3 倍！</strong>）。感測器對準放大後的條紋進行感測，定位誤差 ±1 μm 換算後<strong>累積誤差驟降至 0.087%（小於 0.1%）</strong>！
+            </p>
+          </div>
+        </div>
+
+        <!-- Moiré Interactive Simulator -->
+        <div class="interactive-panel">
+          <div class="controls-row-sliders">
+            <div class="control-group">
+              <label for="slider-moire-angle">
+                <strong>光柵交錯夾角 (θ)：</strong>
+                <span id="label-moire-angle" class="text-cyan">1.0°</span>
+              </label>
+              <input type="range" id="slider-moire-angle" min="0" max="3.0" step="0.1" value="1.0">
+            </div>
+            <div class="control-group">
+              <label for="slider-moire-pitch">
+                <strong>主光柵柵距 (w)：</strong>
+                <span id="label-moire-pitch" class="text-green">20 μm</span>
+              </label>
+              <input type="range" id="slider-moire-pitch" min="10" max="40" step="2" value="20">
+            </div>
+            <div class="control-group">
+              <label for="slider-moire-shift">
+                <strong>拖曳副尺水平位移 (Δx)：</strong>
+                <span id="label-moire-shift" class="text-orange">0.0 μm</span>
+              </label>
+              <input type="range" id="slider-moire-shift" min="0" max="100" step="0.5" value="0">
+            </div>
+          </div>
+
+          <div class="moire-visual-row">
+            <div class="moire-canvas-container">
+              <h4>光柵疊合與莫爾條紋動態 Canvas 模擬（可見宏觀縱向移動）</h4>
+              <canvas id="canvas-moire" width="850" height="260"></canvas>
+            </div>
+          </div>
+
+          <!-- Moiré Calculations Dashboard -->
+          <div class="moire-calc-grid">
+            <div class="calc-box">
+              <span class="calc-title">條紋週期 (Fringe Period l)</span>
+              <span class="calc-num text-cyan" id="calc-fringe-l">1.146 mm</span>
+              <span class="calc-sub">l = w / [2·sin(θ/2)]</span>
+            </div>
+            <div class="calc-box">
+              <span class="calc-title">幾何光學放大倍率 (Magnification)</span>
+              <span class="calc-num text-green" id="calc-mag-ratio">57.3 倍</span>
+              <span class="calc-sub">M ≈ l / w ≈ 1 / θ</span>
+            </div>
+            <div class="calc-box">
+              <span class="calc-title">感測器 1μm 安裝誤差換算</span>
+              <span class="calc-num text-orange" id="calc-equiv-err">0.087%</span>
+              <span class="calc-sub">相較於平行安裝的 5.0%，降幅 &gt; 98%</span>
+            </div>
+            <div class="calc-box">
+              <span class="calc-title">移動 20mm 累積誤差對比</span>
+              <span class="calc-num text-red" id="calc-cum-err">僅 ±0.017 mm</span>
+              <span class="calc-sub">平行安裝高達 ±1.0 mm (直接失效)</span>
+            </div>
+          </div>
+
+          <div class="tip-box">
+            💡 <strong>直觀動手體會：</strong>輕輕拖曳「副尺水平位移」滑桿，注意觀察畫布中的莫爾暗帶：副尺在水平方向只移動了微小的數十微米，而黑色莫爾條紋在垂直方向卻以 <strong>57 倍的速度宏觀快速奔馳</strong>！這就是光學幾何放大效應的精髓！
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- SECTION 6: QUADRATURE & DIRECTION & REFERENCE MARK -->
+    <section id="section-quadrature" class="lab-card">
+      <div class="card-header">
+        <span class="section-num">Page 28 ~ 29, 33</span>
+        <h2>6. 4倍頻解碼 (Quadrature Decoding)、方向狀態機與參考刻劃線</h2>
+      </div>
+
+      <div class="sub-block">
+        <div class="three-concept-row">
+          <div class="concept-item">
+            <h4>1. 4倍頻原理解析 (Page 28)</h4>
+            <p>
+              將差動弦波 Va, Vb 通過比較器轉換為正交數位方波 A 與 B。<br>
+              在一個週期內，A 與 B 產生 4 個不同的數位狀態：(1,1), (1,0), (0,0), (0,1)。<br>
+              若主尺線距為 20 μm，則方波每 5 μm 即可計數一次，<strong>解析度直接提高 4 倍</strong>！
+            </p>
+          </div>
+          <div class="concept-item">
+            <h4>2. 移動方向邏輯判別 (Page 33)</h4>
+            <p>
+              單純計數無法判別左右方向，方向是依據方波編碼的<strong>狀態轉移順序</strong>來判定的：<br>
+              <strong>正向移動：</strong>(11) → (10) → (00) → (01)<br>
+              <strong>反向移動：</strong>(11) → (01) → (00) → (10)
+            </p>
+          </div>
+          <div class="concept-item">
+            <h4>3. 參考刻劃線 (Reference Mark) (Page 29)</h4>
+            <p>
+              刻劃線若有微小製造誤差，增量計數會累積該誤差。因此在固定距離處設有<strong>參考刻劃線 (Index Mark)</strong>。<br>
+              每次讀取頭滑過參考訊號時，立即強制將位移重設修正為基準值，並利用寬平行光束之<strong>平均化效果 (Averaging effect)</strong> 消除刻劃瑕疵。
+            </p>
+          </div>
+        </div>
+
+        <!-- Interactive Simulator -->
+        <div class="interactive-panel">
+          <div class="panel-top-controls">
+            <div class="control-group">
+              <label for="slider-carriage-pos">拖曳移動滑台位置（觀察方波與狀態機）：<span id="label-carriage-pos">0.0 μm</span></label>
+              <input type="range" id="slider-carriage-pos" min="0" max="100" step="0.5" value="0">
+            </div>
+            <div class="btn-group">
+              <button id="btn-jog-left" class="btn btn-primary">◀ 向左慢速移動</button>
+              <button id="btn-jog-right" class="btn btn-primary">向右慢速移動 ▶</button>
+              <button id="btn-pass-ref" class="btn btn-warning">🎯 滑過參考標記 (歸零校準)</button>
+              <button id="btn-reset-counter" class="btn btn-secondary">重設計數器</button>
+            </div>
+          </div>
+
+          <div class="grid-2-canvas">
+            <div class="canvas-box">
+              <h4>方波 A、B 時序與當前邊緣位置 (4倍頻)</h4>
+              <canvas id="canvas-quadrature" width="480" height="230"></canvas>
+            </div>
+            <div class="canvas-box">
+              <h4>方向判定狀態機環形流向 (State Machine)</h4>
+              <canvas id="canvas-state-machine" width="480" height="230"></canvas>
+            </div>
+          </div>
+
+          <!-- Digital Readout Dashboard -->
+          <div class="status-dashboard">
+            <div class="status-item">
+              <span class="status-label">當前雙路邏輯電位 (A, B)</span>
+              <span class="status-val text-cyan" id="disp-ab-state">(1, 1)</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">運動方向判別 (Direction)</span>
+              <span class="status-val text-green" id="disp-direction">正向 (+ / Forward)</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">4倍頻累積計數值 (Counts)</span>
+              <span class="status-val text-orange" id="disp-counts">0 Pulse</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">解算實際位移 (解析度 5μm)</span>
+              <span class="status-val text-cyan" id="disp-calc-pos">0.0 μm</span>
+            </div>
+          </div>
+
+          <div class="ref-mark-alert" id="ref-alert" style="display:none;">
+            🎯 <strong>觸發參考刻劃線 (Reference Mark)！</strong>增量計數器已同步校正為絕對基準距離，已消除刻劃累積誤差！
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- SECTION 7: LISSAJOUS CALIBRATION -->
+    <section id="section-lissajous" class="lab-card">
+      <div class="card-header">
+        <span class="section-num">Page 32</span>
+        <h2>7. 利薩爾圓 (Lissajous Circle) 示波器調校儀</h2>
+      </div>
+
+      <div class="sub-block">
+        <p class="desc-text">
+          在工業現場安裝光學尺時，如何確定感測器位置與相位是否精確到位？
+          工程師會將差動後的弦波 Va 與 Vb 輸入<strong>示波器的 X-Y 模式 (極座標圖)</strong>：<br>
+          • <strong>正圓形：</strong>表示兩路訊號相位差剛好為 90° 正交、且振幅平衡，感測器安裝完全正確。<br>
+          • <strong>橢圓形 / 傾斜：</strong>表示兩路訊號存在相位誤差或振幅不平衡，必須透過微調機構旋轉感測器角度，直到圖形成為正圓！
+        </p>
+
+        <div class="interactive-panel">
+          <div class="controls-row-sliders">
+            <div class="control-group">
+              <label for="slider-phase-err">
+                <strong>光感測器安裝相位偏差 (Δφ)：</strong>
+                <span id="label-phase-err" class="text-orange">25° (未對準)</span>
+              </label>
+              <input type="range" id="slider-phase-err" min="-45" max="45" step="1" value="25">
+            </div>
+            <div class="control-group">
+              <label for="slider-amp-ratio">
+                <strong>X/Y 增益比例平衡 (Ay / Ax)：</strong>
+                <span id="label-amp-ratio" class="text-cyan">1.30</span>
+              </label>
+              <input type="range" id="slider-amp-ratio" min="0.6" max="1.5" step="0.02" value="1.3">
+            </div>
+            <button id="btn-quick-calibrate" class="btn btn-warning">🎯 執行工程自動校準</button>
+            <button id="btn-random-error" class="btn btn-secondary">🎲 產生隨機安裝失真</button>
+          </div>
+
+          <div class="grid-2-canvas">
+            <div class="canvas-box">
+              <h4>虛擬示波器 X-Y 模式 (利薩爾圖形)</h4>
+              <canvas id="canvas-lissajous" width="480" height="260"></canvas>
+            </div>
+            <div class="canvas-box">
+              <h4>示波器時域雙通道波形 (Ch1: Va, Ch2: Vb)</h4>
+              <canvas id="canvas-lissajous-time" width="480" height="260"></canvas>
+            </div>
+          </div>
+
+          <div class="status-dashboard">
+            <div class="status-item">
+              <span class="status-label">當前相位差 (Δθ)</span>
+              <span class="status-val text-cyan" id="disp-cur-phase">115.0° (理想 90.0°)</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">圖形偏心率 (Eccentricity)</span>
+              <span class="status-val text-orange" id="disp-eccentricity">0.68 (橢圓)</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">工程校準狀態判定</span>
+              <span class="status-val status-badge-err" id="disp-calib-status">❌ 未校準 (橢圓形)</span>
+            </div>
+          </div>
+
+          <div class="tip-box">
+            🔧 <strong>工程挑戰：</strong>請試著親自拖曳「安裝相位偏差」滑桿調至 <strong>0°</strong>，並將「增益比例」調至 <strong>1.00</strong>，親眼目睹橢圓形蛻變為飽滿標準的正圓形！這就是機械裝配現場光學尺調準的關鍵手感。
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- SECTION 8: QUIZ -->
+    <section id="section-quiz" class="lab-card quiz-card">
+      <div class="card-header">
+        <span class="section-num">課堂隨堂評量</span>
+        <h2>8. 學生實戰測驗：觀念與計算能力自我檢測</h2>
+      </div>
+
+      <div class="sub-block">
+        <p class="desc-text">
+          請檢驗您對教材第 19 ~ 33 頁核心概念的掌握度。共 6 道題目，涵蓋背隙成因、差動電路、莫爾條紋放大、4倍頻解析度、方向判別與利薩爾圓調校。
+        </p>
+
+        <div id="quiz-container" class="quiz-container">
+          <!-- Dynamically populated by quiz.js -->
+        </div>
+
+        <div class="quiz-footer">
+          <button id="btn-submit-quiz" class="btn btn-primary btn-lg">確認送出答案並計算成績</button>
+          <button id="btn-retry-quiz" class="btn btn-secondary btn-lg" style="display:none;">重新測驗</button>
+          <div id="quiz-score-box" class="quiz-score-box" style="display:none;"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p>精密機械線性編碼器互動教學網頁 | 依據《精密機械之組成及誤差成因》第 19 ~ 33 頁編製</p>
+      <p class="footer-sub">國立成功大學 / 南臺科技大學 精密機械工程教學互動教材 | Designed by Antigravity</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/inductive.js"></script>
+  <script src="js/magnetic.js"></script>
+  <script src="js/optical.js"></script>
+  <script src="js/moire.js"></script>
+  <script src="js/lissajous.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
